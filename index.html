@@ -1,0 +1,669 @@
+!<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rahyang Generator V4.6</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .loader {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid currentColor;
+            width: 1.25rem;
+            height: 1.25rem;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .image-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .image-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .image-container:hover .image-overlay {
+            opacity: 1;
+        }
+        /* Hide scrollbar for cleaner look */
+        textarea {
+            resize: vertical;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900 font-sans p-4 sm:p-8 min-h-screen">
+
+    <header class="text-center mb-10 pb-4 border-b-2 border-transparent relative">
+        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-purple-600 transition duration-500">
+            RAHYANG IMAGES GENERATOR V4.6
+        </h1>
+        <p class="mt-2 text-xl text-gray-600">
+            Ngonten Jadi Mudah: Gabungkan Produk, Model, dan Konsep Foto dalam Sekali Klik
+        </p>
+        <div class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent animate-pulse-slow"></div>
+    </header>
+
+    <nav class="flex justify-center flex-wrap gap-2 sm:gap-4 mb-6 sm:mb-8 pb-4 border-b border-gray-200">
+        <button onclick="switchTab('tts')" id="btn-tab-tts" class="py-2 px-4 rounded-lg text-sm sm:text-base font-semibold transition duration-300 bg-emerald-600 text-white shadow-lg shadow-emerald-700/30">
+            Text To Voice
+        </button>
+        <button onclick="switchTab('image')" id="btn-tab-image" class="py-2 px-4 rounded-lg text-sm sm:text-base font-semibold transition duration-300 bg-gray-200/80 text-gray-600 hover:bg-gray-300">
+            Rahyang Images Generator
+        </button>
+        <button onclick="switchTab('veo')" id="btn-tab-veo" class="py-2 px-4 rounded-lg text-sm sm:text-base font-semibold transition duration-300 bg-gray-200/80 text-gray-600 hover:bg-gray-300">
+            Veo 3 Prompt Crafter
+        </button>
+    </nav>
+
+    <main class="max-w-6xl mx-auto">
+
+        <section id="section-tts" class="block">
+            <div class="p-6 bg-gray-100/80 rounded-2xl shadow-xl border border-gray-300/50 backdrop-blur-sm mb-8">
+                <h2 class="text-2xl font-semibold mb-4 text-emerald-600 border-b border-gray-300/50 pb-2 flex items-center">
+                    <i data-lucide="mic" class="w-6 h-6 mr-2"></i>
+                    Generator Teks-ke-Suara (Gemini TTS)
+                </h2>
+
+                <div class="bg-blue-100/70 border-l-4 border-blue-400 p-3 mb-6 rounded-lg text-sm text-blue-800">
+                    <p class="font-semibold mb-1">Tips:</p>
+                    <ul class="list-disc list-inside space-y-0.5 text-xs">
+                        <li>Gunakan koma (,) untuk jeda singkat dan tanda seru (!) untuk penekanan.</li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-2">Pilih Suara:</label>
+                        <select id="tts-voice-select" class="w-full p-3 text-sm text-gray-900 bg-white rounded-lg border border-gray-400 focus:ring-emerald-400">
+                            </select>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="tts-input" class="block text-sm font-semibold text-gray-800 mb-2">Teks:</label>
+                    <textarea id="tts-input" rows="4" maxlength="500" class="w-full p-4 border border-gray-400 rounded-lg focus:ring-emerald-400 resize-none" placeholder="Masukkan teks di sini...">Selamat datang! Mari kita buat konten yang menarik.</textarea>
+                    <p class="text-xs text-gray-500 mt-1 text-right"><span id="char-count">0</span>/500 karakter</p>
+                </div>
+
+                <button id="btn-generate-tts" onclick="generateTTS()" class="w-full flex justify-center items-center py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-lg transition">
+                    Buat Voice Over
+                </button>
+
+                <div id="tts-result-area" class="hidden mt-8 pt-4 border-t border-gray-300/50">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-3">Hasil Suara:</h2>
+                    <audio id="audio-player" controls class="w-full mb-4"></audio>
+                    <a id="download-audio-btn" href="#" download="voice-over.wav" class="inline-flex justify-center items-center py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg w-full">
+                        Download (.wav)
+                    </a>
+                </div>
+                <div id="tts-error" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg border border-red-400 text-sm"></div>
+            </div>
+        </section>
+
+        <section id="section-image" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="p-6 bg-gray-100/80 rounded-2xl shadow-xl border border-gray-300/50 backdrop-blur-sm">
+                        <h2 class="text-2xl font-bold mb-4 flex items-center text-emerald-600">
+                            <i data-lucide="zap" class="w-6 h-6 mr-2"></i> Input Generator
+                        </h2>
+
+                        <div class="mb-6 p-4 bg-white/50 rounded-xl border border-gray-300">
+                            <label class="block text-sm font-semibold text-gray-800 mb-2">1. Unggah Foto Produk (Utama) - Wajib</label>
+                            <input type="file" id="img-product-upload" accept="image/*" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                            <div id="preview-product" class="flex gap-2 mt-2 flex-wrap"></div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-gray-800 mb-1">2. Deskripsi Produk & Konsep (Opsional)</label>
+                            <textarea id="img-desc" rows="3" class="w-full p-3 text-sm border border-gray-400 rounded-lg" placeholder="Contoh: Kaos ini sangat bagus. Konsep foto di kamar estetik..."></textarea>
+                        </div>
+
+                        <div class="mb-6 p-4 bg-white/50 rounded-xl border border-gray-300">
+                            <label class="block text-sm font-semibold text-gray-800 mb-2">3. Unggah Foto Model (Opsional - Khusus UGC)</label>
+                            <input type="file" id="img-model-upload" accept="image/*" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                            <div id="preview-model" class="flex flex-col gap-2 mt-2"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">4. Rasio</label>
+                                <select id="img-ratio" class="w-full p-3 text-sm border border-gray-400 rounded-lg bg-white">
+                                    <option value="9:16">PORTRAIT (9:16)</option>
+                                    <option value="1:1">SQUARE (1:1)</option>
+                                    <option value="16:9">LANDSCAPE (16:9)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">5. Bahasa</label>
+                                <select id="img-lang" class="w-full p-3 text-sm border border-gray-400 rounded-lg bg-white">
+                                    <option value="Indonesia">Indonesia</option>
+                                    <option value="English">English</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button id="btn-generate-img" onclick="generateImages()" class="w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg flex justify-center items-center transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            <span id="btn-img-text">Generate 9 Konten</span>
+                            <div id="btn-img-loader" class="loader ml-2 hidden"></div>
+                        </button>
+                        <div id="img-error" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg border border-red-400 text-sm whitespace-pre-wrap"></div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="sticky top-4 p-6 bg-gray-100/80 rounded-2xl shadow-xl border border-gray-300/50 backdrop-blur-sm h-screen overflow-y-auto">
+                        <h2 class="text-2xl font-bold mb-4 flex items-center text-purple-600">
+                            <i data-lucide="download" class="w-6 h-6 mr-2"></i> Hasil
+                        </h2>
+                        <div id="results-container" class="space-y-8">
+                            <p class="text-gray-500 text-sm italic text-center">Hasil gambar akan muncul di sini...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-veo" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 p-6 bg-gray-100/80 rounded-2xl shadow-xl border border-gray-300/50 backdrop-blur-sm">
+                    <h2 class="text-2xl font-semibold mb-4 text-emerald-600 border-b border-gray-300/50 pb-2">
+                        Input Prompt (12 Poin)
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="veo-form-container">
+                        </div>
+                    <button onclick="generateVeoPrompt()" class="mt-6 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition">
+                        Generate Prompt
+                    </button>
+                </div>
+
+                <div class="lg:col-span-1 p-6 bg-gray-100/80 rounded-2xl shadow-xl border border-gray-300/50 backdrop-blur-sm">
+                    <h2 class="text-2xl font-semibold mb-4 text-purple-600 border-b border-gray-300/50 pb-2">Hasil</h2>
+                    <label class="text-sm font-medium">Prompt Inggris (Final)</label>
+                    <textarea id="veo-output-en" rows="10" readonly class="w-full mt-2 p-4 text-sm bg-gray-200/80 rounded-lg border border-purple-600 resize-none"></textarea>
+                    <button onclick="copyVeo()" class="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg">
+                        Salin Prompt
+                    </button>
+                    <p id="veo-msg" class="text-emerald-600 text-sm mt-2 font-medium"></p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="lightbox" class="fixed inset-0 bg-black bg-opacity-90 hidden items-center justify-center z-50 p-4" onclick="closeLightbox()">
+        <button class="absolute top-4 right-4 text-white p-2 bg-gray-800 rounded-full hover:bg-gray-700">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+        <img id="lightbox-img" src="" class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl">
+    </div>
+
+    <script>
+        // --- KONFIGURASI ---
+        const GEN_MODEL = "gemini-2.5-flash-image-preview";
+        const TEXT_MODEL = "gemini-2.5-flash-preview-09-2025";
+        const TTS_MODEL = "gemini-2.5-flash-preview-tts";
+
+        // --- GLOBAL STATE ---
+        let uploadedProductFiles = []; // Array of base64 strings
+        let uploadedModelFiles = [];   // Array of base64 strings
+        let modelDescriptions = [];
+        
+        // --- UTILITIES ---
+        function getEl(id) { return document.getElementById(id); }
+        
+        function switchTab(tabName) {
+            ['tts', 'image', 'veo'].forEach(t => {
+                getEl(`section-${t}`).classList.add('hidden');
+                getEl(`btn-tab-${t}`).classList.remove('bg-emerald-600', 'text-white', 'shadow-lg');
+                getEl(`btn-tab-${t}`).classList.add('bg-gray-200/80', 'text-gray-600');
+            });
+
+            getEl(`section-${tabName}`).classList.remove('hidden');
+            const activeBtn = getEl(`btn-tab-${tabName}`);
+            activeBtn.classList.remove('bg-gray-200/80', 'text-gray-600');
+            activeBtn.classList.add('bg-emerald-600', 'text-white', 'shadow-lg');
+        }
+
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => alert("Teks berhasil disalin!"));
+        }
+
+        function downloadImage(base64, filename) {
+            const link = document.createElement('a');
+            link.href = `data:image/jpeg;base64,${base64}`;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function openLightbox(src) {
+            getEl('lightbox-img').src = src;
+            getEl('lightbox').classList.remove('hidden');
+            getEl('lightbox').classList.add('flex');
+        }
+        function closeLightbox() {
+            getEl('lightbox').classList.add('hidden');
+            getEl('lightbox').classList.remove('flex');
+            getEl('lightbox-img').src = '';
+        }
+
+        // --- AUDIO UTILS (WAV HEADER) ---
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+            return bytes.buffer;
+        }
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+        }
+        function pcmToWav(pcm16, sampleRate) {
+            const numChannels = 1, bytesPerSample = 2, blockAlign = numChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign, dataLength = pcm16.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataLength), view = new DataView(buffer);
+            let offset = 0;
+            writeString(view, offset, 'RIFF'); offset += 4;
+            view.setUint32(offset, 36 + dataLength, true); offset += 4;
+            writeString(view, offset, 'WAVE'); offset += 4;
+            writeString(view, offset, 'fmt '); offset += 4;
+            view.setUint32(offset, 16, true); offset += 4;
+            view.setUint16(offset, 1, true); offset += 2;
+            view.setUint16(offset, numChannels, true); offset += 2;
+            view.setUint32(offset, sampleRate, true); offset += 4;
+            view.setUint32(offset, byteRate, true); offset += 4;
+            view.setUint16(offset, blockAlign, true); offset += 2;
+            view.setUint16(offset, bytesPerSample * 8, true); offset += 2;
+            writeString(view, offset, 'data'); offset += 4;
+            view.setUint32(offset, dataLength, true); offset += 4;
+            for (let i = 0; i < pcm16.length; i++, offset += 2) view.setInt16(offset, pcm16[i], true);
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        // --- TTS LOGIC ---
+        const voices = [
+            { name: "Kore", gender: "Pria", desc: "Tegas, Profesional" },
+            { name: "Fenrir", gender: "Pria", desc: "Semangat" },
+            { name: "Puck", gender: "Wanita", desc: "Ceria" },
+            { name: "Achernar", gender: "Wanita", desc: "Lembut" },
+            { name: "Charon", gender: "Pria", desc: "Informatif" }
+        ];
+        
+        // Populate TTS Voices
+        const voiceSelect = getEl('tts-voice-select');
+        voices.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.name;
+            opt.text = `${v.name} - ${v.gender} (${v.desc})`;
+            voiceSelect.appendChild(opt);
+        });
+
+        getEl('tts-input').addEventListener('input', function() {
+            getEl('char-count').innerText = this.value.length;
+        });
+
+        async function generateTTS() {
+            const text = getEl('tts-input').value.trim();
+            const voice = getEl('tts-voice-select').value;
+            if(!text) return alert("Masukkan teks!");
+
+            const btn = getEl('btn-generate-tts');
+            const resultArea = getEl('tts-result-area');
+            const errorArea = getEl('tts-error');
+            
+            btn.disabled = true;
+            btn.innerText = "Memproses...";
+            errorArea.classList.add('hidden');
+            resultArea.classList.add('hidden');
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent`;
+                const payload = {
+                    contents: [{ parts: [{ text: text }] }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
+                    }
+                };
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error(await response.text());
+                
+                const data = await response.json();
+                const audioData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+                
+                if(!audioData) throw new Error("No audio data returned");
+
+                const wavBlob = pcmToWav(new Int16Array(base64ToArrayBuffer(audioData)), 24000);
+                const audioUrl = URL.createObjectURL(wavBlob);
+                
+                getEl('audio-player').src = audioUrl;
+                getEl('download-audio-btn').href = audioUrl;
+                resultArea.classList.remove('hidden');
+
+            } catch (e) {
+                errorArea.innerText = "Error: " + e.message;
+                errorArea.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Buat Voice Over";
+            }
+        }
+
+        // --- IMAGE GENERATOR LOGIC ---
+        
+        // File Handling
+        getEl('img-product-upload').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files).slice(0, 2);
+            uploadedProductFiles = await Promise.all(files.map(fileToBase64));
+            renderPreview('preview-product', uploadedProductFiles);
+        });
+
+        getEl('img-model-upload').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files).slice(0, 2);
+            uploadedModelFiles = await Promise.all(files.map(fileToBase64));
+            // Reset descriptions array size
+            modelDescriptions = new Array(uploadedModelFiles.length).fill('');
+            renderPreview('preview-model', uploadedModelFiles, true);
+        });
+
+        function renderPreview(containerId, base64Array, showDescInput = false) {
+            const container = getEl(containerId);
+            container.innerHTML = '';
+            base64Array.forEach((b64, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = "flex flex-col gap-2";
+                
+                const imgDiv = document.createElement('div');
+                imgDiv.className = "w-20 h-20 bg-gray-200 rounded overflow-hidden border border-gray-300";
+                imgDiv.innerHTML = `<img src="data:image/jpeg;base64,${b64}" class="w-full h-full object-cover">`;
+                
+                wrapper.appendChild(imgDiv);
+                
+                if(showDescInput) {
+                    const input = document.createElement('input');
+                    input.type = "text";
+                    input.placeholder = "Deskripsi model (baju, dll)";
+                    input.className = "text-xs p-1 border rounded w-48";
+                    input.value = modelDescriptions[idx] || '';
+                    input.onchange = (e) => modelDescriptions[idx] = e.target.value;
+                    wrapper.appendChild(input);
+                }
+                container.appendChild(wrapper);
+            });
+        }
+
+        // Templates Data
+        const PROMPT_TEMPLATES = {
+            'B-Roll': [
+                { title: "Detail Makro", text: "Foto makro super detail dari produk referensi, menonjolkan tekstur." },
+                { title: "Flat Lay", text: "Sudut pandang atas (top-down) minimalis." },
+                { title: "Adegan Dinamis", text: "Produk dalam aksi atau penggunaan nyata." },
+                { title: "Alami", text: "Produk di permukaan alami dengan depth of field." }
+            ],
+            'UGC': [
+                { title: "Kasual", text: "Model menggunakan produk dengan pose kasual. Wajah model IDENTIK." },
+                { title: "Bersemangat", text: "Model bersemangat menggunakan produk." },
+                { title: "Santai", text: "Model sedang santai dengan produk." },
+                { title: "Sudut Unik", text: "Angle kamera kreatif dari samping." }
+            ],
+            'PHOTO PRODUK': [
+                { title: "Tekstur", text: "Close up tekstur material produk." },
+                { title: "Fitur", text: "Fokus pada logo atau fitur unik." },
+                { title: "Sinematik", text: "Pencahayaan dramatis studio." },
+                { title: "Terisolasi", text: "Background bersih minimalis." }
+            ]
+        };
+
+        async function generateImages() {
+            if(uploadedProductFiles.length === 0) return alert("Upload foto produk dulu!");
+            
+            const btn = getEl('btn-generate-img');
+            const loader = getEl('btn-img-loader');
+            const errorBox = getEl('img-error');
+            const resultsContainer = getEl('results-container');
+            
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+            errorBox.classList.add('hidden');
+            resultsContainer.innerHTML = ''; // Clear old results
+
+            const description = getEl('img-desc').value;
+            const ratio = getEl('img-ratio').value;
+            
+            // Prepare tasks
+            let tasks = [];
+            for (const [category, templates] of Object.entries(PROMPT_TEMPLATES)) {
+                templates.forEach((tpl, idx) => {
+                    tasks.push({ category, tpl, idx });
+                });
+            }
+
+            // Render Placeholders
+            let html = '';
+            tasks.forEach(task => {
+                const id = `res-${task.category}-${task.idx}`;
+                html += `
+                <div class="mb-6 pb-4 border-b border-gray-200 last:border-0">
+                    <h3 class="font-bold text-emerald-700 text-sm mb-2">${task.category} - ${task.tpl.title}</h3>
+                    <div id="${id}" class="image-container w-full bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 aspect-[${ratio.replace(':','/')}]">
+                        <div class="loader text-gray-400"></div>
+                    </div>
+                    <div id="tools-${id}" class="hidden mt-2 grid grid-cols-2 gap-2">
+                         </div>
+                </div>`;
+            });
+            resultsContainer.innerHTML = html;
+
+            // Process Sequentially (to avoid rate limits slightly better, though parallel is faster)
+            // We'll do simple parallel fetch for this demo
+            
+            for (const task of tasks) {
+                processSingleImage(task, description, ratio).catch(err => {
+                    const div = getEl(`res-${task.category}-${task.idx}`);
+                    div.innerHTML = `<span class="text-red-500 text-xs text-center p-2">Gagal: ${err.message}</span>`;
+                    div.classList.add('border-red-300');
+                });
+            }
+            
+            btn.disabled = false;
+            loader.classList.add('hidden');
+        }
+
+        async function processSingleImage(task, productDesc, ratio) {
+            const { category, tpl, idx } = task;
+            const containerId = `res-${category}-${idx}`;
+            const toolsId = `tools-${category}-${idx}`;
+            
+            // Build Prompt
+            let modelPrompt = "";
+            let hasModel = false;
+            if (category === 'UGC' && uploadedModelFiles.length > 0) {
+                hasModel = true;
+                const desc = modelDescriptions.join(", ");
+                modelPrompt = `REPLIKASI MODEL dari foto referensi. Wajah HARUS IDENTIK. ${desc}.`;
+            } else {
+                modelPrompt = "TANPA MODEL MANUSIA. Fokus Produk.";
+            }
+
+            const prompt = `
+                Role: Expert Photographer.
+                Task: Create realistic affiliate marketing image.
+                Context: ${tpl.text}. ${productDesc}.
+                Rules: PRODUCT MUST LOOK IDENTICAL to reference. Ratio ${ratio}. No text/watermarks.
+                Specifics: ${modelPrompt}
+            `;
+
+            const contents = [
+                { text: prompt },
+                ...uploadedProductFiles.map(b64 => ({ inlineData: { mimeType: 'image/jpeg', data: b64 } })),
+                ...(hasModel ? uploadedModelFiles.map(b64 => ({ inlineData: { mimeType: 'image/jpeg', data: b64 } })) : [])
+            ];
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_MODEL}:generateContent`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    contents: [{ parts: contents }],
+                    generationConfig: { responseModalities: ['IMAGE'] }
+                })
+            });
+
+            if (!response.ok) throw new Error("API Error");
+            const data = await response.json();
+            const imgBase64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            
+            if(!imgBase64) throw new Error("No Image");
+
+            // Update UI
+            const div = getEl(containerId);
+            const imgTag = `<img src="data:image/jpeg;base64,${imgBase64}" class="w-full h-full object-cover" onclick="openLightbox(this.src)">`;
+            
+            // Overlay HTML
+            const overlay = `
+                <div class="image-overlay pointer-events-none">
+                    <div class="pointer-events-auto flex space-x-2">
+                        <button onclick="openLightbox('data:image/jpeg;base64,${imgBase64}')" class="bg-purple-600 text-white p-2 rounded text-xs">View</button>
+                        <button onclick="downloadImage('${imgBase64}', 'rahyang_${category}_${idx}.jpg')" class="bg-emerald-600 text-white p-2 rounded text-xs">Save</button>
+                    </div>
+                </div>
+            `;
+            
+            div.innerHTML = imgTag + overlay;
+            div.classList.remove('border-dashed', 'border-2');
+
+            // Add Video Prompt & Cinematic Buttons
+            const toolsDiv = getEl(toolsId);
+            toolsDiv.classList.remove('hidden');
+            
+            // Button Video Prompt
+            const btnVideo = document.createElement('button');
+            btnVideo.className = "text-xs bg-blue-500 text-white py-1 px-2 rounded";
+            btnVideo.innerText = "Video Script";
+            btnVideo.onclick = () => generateTextPrompt(category, idx, imgBase64, 'VIDEO');
+            
+            // Button Cinematic
+            const btnCine = document.createElement('button');
+            btnCine.className = "text-xs bg-teal-500 text-white py-1 px-2 rounded";
+            btnCine.innerText = "Cinematic Prompt";
+            btnCine.onclick = () => generateTextPrompt(category, idx, imgBase64, 'CINE');
+
+            toolsDiv.appendChild(btnVideo);
+            toolsDiv.appendChild(btnCine);
+        }
+
+        async function generateTextPrompt(cat, idx, imgBase64, type) {
+            const btnContext = event.target;
+            const originalText = btnContext.innerText;
+            btnContext.innerText = "...";
+            btnContext.disabled = true;
+
+            const prompt = type === 'VIDEO' 
+                ? "Create a short 5-second video script/scenario based on this image for TikTok Ads. Include dialogue (Indonesian) and camera movement."
+                : "Write a highly detailed cinematic text-to-image prompt describing this image accurately.";
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent`;
+                const response = await fetch(url, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contents: [{ parts: [{text: prompt}, {inlineData: {mimeType: 'image/jpeg', data: imgBase64}}] }]
+                    })
+                });
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error generating text";
+                
+                // Show Modal or Alert with result (Simple alert for now to save space)
+                // Copy to clipboard directly
+                copyToClipboard(text);
+                alert(`${type === 'VIDEO' ? 'Skenario' : 'Prompt'} berhasil disalin ke clipboard!`);
+
+            } catch(e) {
+                alert("Gagal: " + e.message);
+            } finally {
+                btnContext.innerText = originalText;
+                btnContext.disabled = false;
+            }
+        }
+
+        // --- VEO PROMPT CRAFTER ---
+        const veoFields = {
+            subject: "1. Subjek Utama",
+            action: "2. Aksi/Tindakan",
+            expression: "3. Ekspresi",
+            place: "4. Tempat",
+            lighting: "5. Pencahayaan",
+            style: "6. Gaya Video"
+        };
+        
+        const veoForm = getEl('veo-form-container');
+        for (const [key, label] of Object.entries(veoFields)) {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <label class="block text-sm font-semibold mb-1 text-gray-700">${label}</label>
+                <input type="text" id="veo-${key}" class="w-full p-3 border rounded-lg text-sm focus:ring-emerald-500" placeholder="...">
+            `;
+            veoForm.appendChild(div);
+        }
+
+        function generateVeoPrompt() {
+            const vals = {};
+            for(const key in veoFields) vals[key] = getEl(`veo-${key}`).value;
+            
+            const core = `${vals.subject || 'Subject'} ${vals.action || 'doing something'} ${vals.place ? 'in ' + vals.place : ''}.`;
+            const details = `${vals.expression ? 'Expression: ' + vals.expression + '. ' : ''}${vals.lighting ? 'Lighting: ' + vals.lighting + '. ' : ''}${vals.style ? 'Style: ' + vals.style + '.' : ''}`;
+            const final = `${core} ${details} Cinematic, 8k, photorealistic.`.trim();
+            
+            getEl('veo-output-en').value = final;
+            getEl('veo-msg').innerText = "Prompt siap!";
+        }
+        
+        function copyVeo() {
+            copyToClipboard(getEl('veo-output-en').value);
+        }
+
+        // Initialize Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
